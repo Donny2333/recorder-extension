@@ -1,0 +1,29 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  outline: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+.menu {
+  width: 280px;
+  padding: 10px;
+}
+
+.menu-item {
+  padding: 5px;
+}
+
+.menu-item label {
+  display: inline-block;
+  width: 60px;
+}
+
+button {
+  padding: 2px 5px;
+}

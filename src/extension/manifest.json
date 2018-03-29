@@ -1,0 +1,14 @@
+{
+  "manifest_version": 2,
+  "name": "Recorder Extension",
+  "version": "0.1",
+  "author": "Donny",
+  "description": "Recorder and uploader",
+  "permissions": ["storage", "tabs"],
+  "browser_action": {
+    "default_popup": "popup/popup.html"
+  },
+  "background": {
+    "scripts": ["background/background.js"]
+  }
+}

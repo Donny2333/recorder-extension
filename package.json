@@ -1,0 +1,21 @@
+{
+  "name": "recorder-plugin",
+  "version": "1.0.0",
+  "description": "A recorder plugin for chrome",
+  "scripts": {
+    "serve": "node src/server/bin/www.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "recorder",
+    "chrome-plugin"
+  ],
+  "author": "Donny",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.16.3",
+    "morgan": "^1.9.0",
+    "request": "^2.85.0"
+  }
+}
