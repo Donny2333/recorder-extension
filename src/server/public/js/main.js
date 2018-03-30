@@ -149,19 +149,28 @@ setTimeout(function() {
   var superBuffer = new Blob(recordedBlobs, { type: 'video/webm' })
   console.log(superBuffer)
 
-  $.ajax({
-    type: 'POST',
-    url: 'http://audio-recorder.72.localhost',
-    contentType: 'application/json; charset=utf-8',
-    data: {
-      type: 'video/webm',
-      blob: '010010'
-    },
-    // dataType: 'json',
-    success: function(data) {
-      console.log(data)
+  var reader = new FileReader()
+  reader.readAsBinaryString(superBuffer)
+  reader.onloadend = function() {
+    console.log(reader.result)
+
+    var xhr = new XMLHttpRequest()
+    xhr.open('post', 'http://audio-recorder.72.sunlands/index.php')
+
+    xhr.setRequestHeader('Content-type', 'application/json')
+    xhr.send(
+      JSON.stringify({
+        type: 'video/webm',
+        blob: reader.result
+      })
+    )
+
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState == 4 && xhr.status == 200) {
+        console.log(xhr.responseText)
+      }
     }
-  })
+  }
 }, 1000)
 
 function start() {
