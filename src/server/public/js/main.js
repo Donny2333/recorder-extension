@@ -8,7 +8,9 @@
 
 'use strict'
 
-var videoElement = document.querySelector('video')
+var videoElement = document.querySelector('video#video')
+var recorderElement = document.querySelector('video#recorder')
+
 var audioInputSelect = document.querySelector('select#audioSource')
 var audioOutputSelect = document.querySelector('select#audioOutput')
 var videoSelect = document.querySelector('select#videoSource')
@@ -150,7 +152,7 @@ setTimeout(function() {
   console.log(superBuffer)
 
   var reader = new FileReader()
-  reader.readAsBinaryString(superBuffer)
+  reader.readAsArrayBuffer(superBuffer)
   reader.onloadend = function() {
     console.log(reader.result)
 
@@ -168,10 +170,14 @@ setTimeout(function() {
     xhr.onreadystatechange = function() {
       if (xhr.readyState == 4 && xhr.status == 200) {
         console.log(xhr.responseText)
+        recorderElement.src = URL.createObjectURL(
+          new Blob([new Uint8Array(reader.result)])
+        )
+        // recorderElement.src = URL.createObjectURL(superBuffer)
       }
     }
   }
-}, 1000)
+}, 5000)
 
 function start() {
   if (window.stream) {
