@@ -5,20 +5,27 @@
  */
 
 const app = require('../app')
-const http = require('http')
+// force https
+const https = require('https')
+const fs = require('fs');
+
+var options = {
+  key: fs.readFileSync('/etc/letsencrypt/live/bwg.bingzhe.wang/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/bwg.bingzhe.wang/fullchain.pem')
+}
 
 /**
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT || '4000')
+const port = normalizePort(process.env.PORT || '4430')
 app.set('port', port)
 
 /**
- * Create HTTP server.
+ * Create HTTPS server.
  */
 
-const server = http.createServer(app)
+const server = https.createServer(options, app)
 
 /**
  * Listen on provided port, on all network interfaces.
