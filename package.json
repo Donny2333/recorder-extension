@@ -16,7 +16,10 @@
     "body-parser": "^1.18.2",
     "express": "^4.16.3",
     "morgan": "^1.9.0",
+    "node-uuid": "^1.4.8",
     "pug": "^2.0.3",
-    "request": "^2.85.0"
+    "recordrtc": "^5.4.6",
+    "request": "^2.85.0",
+    "socket.io": "^2.1.0"
   }
 }

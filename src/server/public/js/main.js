@@ -8,31 +8,55 @@
 
 'use strict'
 
-var videoElement = document.querySelector('video#video')
-var recorderElement = document.querySelector('video#recorder')
+const videoElement = document.querySelector('video#video')
+const audioInputSelect = document.querySelector('select#audioSource')
+const audioOutputSelect = document.querySelector('select#audioOutput')
+const videoSelect = document.querySelector('select#videoSource')
+const startRecording = document.querySelector('button#start-recording')
+const stopRecording = document.querySelector('button#stop-recording')
+const cameraPreview = document.querySelector('#camera-preview')
 
-var audioInputSelect = document.querySelector('select#audioSource')
-var audioOutputSelect = document.querySelector('select#audioOutput')
-var videoSelect = document.querySelector('select#videoSource')
-var selectors = [audioInputSelect, audioOutputSelect, videoSelect]
-var mediaRecorder
-var recordedBlobs = []
+let selectors = [audioInputSelect, audioOutputSelect, videoSelect]
+let mediaRecorder
+let recordedBlobs = []
+
+const socketio = io()
+
+socketio.on('connect', function () {
+  startRecording.disabled = false
+})
+
+socketio.on('merged', function (fileName) {
+  let href = (location.href.split('/').pop().length ? location.href.replace(location.href.split('/').pop(),
+    '') : location.href)
+
+  href = href + 'uploads/' + fileName
+
+  console.log('got file ' + href)
+
+  cameraPreview.src = href
+  cameraPreview.play()
+  cameraPreview.muted = false
+  cameraPreview.controls = true
+})
+
+//
 
 audioOutputSelect.disabled = !('sinkId' in HTMLMediaElement.prototype)
 
 function gotDevices(deviceInfos) {
   // Handles being called several times to update labels. Preserve values.
-  var values = selectors.map(function(select) {
+  const values = selectors.map(function (select) {
     return select.value
   })
-  selectors.forEach(function(select) {
+  selectors.forEach(function (select) {
     while (select.firstChild) {
       select.removeChild(select.firstChild)
     }
   })
-  for (var i = 0; i !== deviceInfos.length; ++i) {
-    var deviceInfo = deviceInfos[i]
-    var option = document.createElement('option')
+  for (let i = 0; i !== deviceInfos.length; ++i) {
+    let deviceInfo = deviceInfos[i]
+    const option = document.createElement('option')
     option.value = deviceInfo.deviceId
     if (deviceInfo.kind === 'audioinput') {
       option.text =
@@ -49,9 +73,9 @@ function gotDevices(deviceInfos) {
       console.log('Some other kind of source/device: ', deviceInfo)
     }
   }
-  selectors.forEach(function(select, selectorIndex) {
+  selectors.forEach(function (select, selectorIndex) {
     if (
-      Array.prototype.slice.call(select.childNodes).some(function(n) {
+      Array.prototype.slice.call(select.childNodes).some(function (n) {
         return n.value === values[selectorIndex]
       })
     ) {
@@ -70,11 +94,11 @@ function attachSinkId(element, sinkId) {
   if (typeof element.sinkId !== 'undefined') {
     element
       .setSinkId(sinkId)
-      .then(function() {
+      .then(function () {
         console.log('Success, audio output device attached: ' + sinkId)
       })
-      .catch(function(error) {
-        var errorMessage = error
+      .catch(function (error) {
+        let errorMessage = error
         if (error.name === 'SecurityError') {
           errorMessage =
             'You need to use HTTPS for selecting audio output ' +
@@ -91,47 +115,14 @@ function attachSinkId(element, sinkId) {
 }
 
 function changeAudioDestination() {
-  var audioDestination = audioOutputSelect.value
+  const audioDestination = audioOutputSelect.value
   attachSinkId(videoElement, audioDestination)
 }
 
 function gotStream(stream) {
   window.stream = stream // make stream available to console
   videoElement.srcObject = stream
-
-  // record stream
-  var options = { mimeType: 'video/webm;codecs=vp9' }
-  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-    console.log(options.mimeType + ' is not Supported')
-    options = { mimeType: 'video/webm;codecs=vp8' }
-    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-      console.log(options.mimeType + ' is not Supported')
-      options = { mimeType: 'video/webm' }
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        console.log(options.mimeType + ' is not Supported')
-        options = { mimeType: '' }
-      }
-    }
-  }
-
-  try {
-    mediaRecorder = new MediaRecorder(window.stream, options)
-  } catch (e) {
-    console.error('Exception while creating MediaRecorder: ' + e)
-    alert(
-      'Exception while creating MediaRecorder: ' +
-        e +
-        '. mimeType: ' +
-        options.mimeType
-    )
-    return
-  }
-  console.log('Created MediaRecorder', mediaRecorder, 'with options', options)
-
-  mediaRecorder.onstop = handleStop
-  mediaRecorder.ondataavailable = handleDataAvailable
-  mediaRecorder.start(10) // collect 10ms of data
-  console.log('MediaRecorder started', mediaRecorder)
+  videoElement.muted = true
 
   // Refresh button list in case labels have become available
   return navigator.mediaDevices.enumerateDevices()
@@ -147,49 +138,89 @@ function handleStop(event) {
   console.log('Recorder stopped: ', event)
 }
 
-setTimeout(function() {
-  var superBuffer = new Blob(recordedBlobs, { type: 'video/webm' })
-  console.log(superBuffer)
+startRecording.onclick = function () {
+  startRecording.disabled = true
+  stopRecording.disabled = false
 
-  var reader = new FileReader()
-  reader.readAsArrayBuffer(superBuffer)
-  reader.onloadend = function() {
-    console.log(reader.result)
+  recordedBlobs = []
 
-    var xhr = new XMLHttpRequest()
-    xhr.open('post', 'http://audio-recorder.72.sunlands/index.php')
-
-    xhr.setRequestHeader('Content-type', 'application/json')
-    xhr.send(
-      JSON.stringify({
-        type: 'video/webm',
-        blob: reader.result
-      })
-    )
-
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState == 4 && xhr.status == 200) {
-        console.log(xhr.responseText)
-        recorderElement.src = URL.createObjectURL(
-          new Blob([new Uint8Array(reader.result)])
-        )
-        // recorderElement.src = URL.createObjectURL(superBuffer)
+  // record stream
+  let options = {mimeType: 'video/webm;codecs=vp9'}
+  if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+    console.log(options.mimeType + ' is not Supported')
+    options = {mimeType: 'video/webm;codecs=vp8'}
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      console.log(options.mimeType + ' is not Supported')
+      options = {mimeType: 'video/webm'}
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        console.log(options.mimeType + ' is not Supported')
+        options = {mimeType: ''}
       }
     }
   }
-}, 5000)
+
+  try {
+    mediaRecorder = new MediaRecorder(window.stream, options)
+  } catch (e) {
+    console.error('Exception while creating MediaRecorder: ' + e)
+    alert('Exception while creating MediaRecorder: ' + e + '. mimeType: ' + options.mimeType)
+    return
+  }
+  console.log('Created MediaRecorder', mediaRecorder, 'with options', options)
+
+  mediaRecorder.onstop = handleStop
+  mediaRecorder.ondataavailable = handleDataAvailable
+  mediaRecorder.start(10) // collect 10ms of data
+  console.log('MediaRecorder started', mediaRecorder)
+}
+
+stopRecording.onclick = function () {
+  startRecording.disabled = false
+  stopRecording.disabled = true
+
+  mediaRecorder.stop()
+
+  const superBuffer = new Blob(recordedBlobs, {type: 'video/webm'})
+
+  const reader = new FileReader()
+  reader.readAsArrayBuffer(superBuffer)
+  reader.onloadend = function () {
+    const files = {
+      audio: {
+        type: 'audio/wav',
+        dataURL: 'data:audio/wav;base64,' + _arrayBufferToBase64(reader.result)
+      }
+      // video: {
+      //     type: recordVideo.getBlob().type || 'video/webm',
+      //     dataURL: videoDataURL
+      // }
+    }
+
+    socketio.emit('message', files)
+  }
+}
+
+function _arrayBufferToBase64(buffer) {
+  let binary = ''
+  let bytes = new Uint8Array(buffer)
+  let len = bytes.byteLength
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return window.btoa(binary)
+}
 
 function start() {
   if (window.stream) {
-    window.stream.getTracks().forEach(function(track) {
+    window.stream.getTracks().forEach(function (track) {
       track.stop()
     })
   }
-  var audioSource = audioInputSelect.value
-  var videoSource = videoSelect.value
-  var constraints = {
-    audio: { deviceId: audioSource ? { exact: audioSource } : undefined },
-    video: { deviceId: videoSource ? { exact: videoSource } : undefined }
+  const audioSource = audioInputSelect.value
+  const videoSource = videoSelect.value
+  const constraints = {
+    audio: {deviceId: audioSource ? {exact: audioSource} : undefined},
+    video: {deviceId: videoSource ? {exact: videoSource} : undefined}
   }
   navigator.mediaDevices
     .getUserMedia(constraints)

@@ -9,30 +9,38 @@
 </head>
 
 <body>
-  <div id="container">
+<div id="container">
 
-    <div class="select">
-      <label for="audioSource">Audio input source: </label>
-      <select id="audioSource"></select>
-    </div>
-
-    <div class="select">
-      <label for="audioOutput">Audio output destination: </label>
-      <select id="audioOutput"></select>
-    </div>
-
-    <div class="select">
-      <label for="videoSource">Video source: </label>
-      <select id="videoSource"></select>
-    </div>
-
-    <video id="video" playsinline autoplay></video>
-
-    <video id="recorder" playsinline autoplay></video>
+  <div class="select">
+    <label for="audioSource">Audio input source: </label>
+    <select id="audioSource"></select>
   </div>
 
-  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-  <script src="js/main.js"></script>
+  <div class="select">
+    <label for="audioOutput">Audio output destination: </label>
+    <select id="audioOutput"></select>
+  </div>
+
+  <div class="select">
+    <label for="videoSource">Video source: </label>
+    <select id="videoSource"></select>
+  </div>
+
+  <div>
+    <button id="start-recording" disabled>Start Recording</button>
+    <button id="stop-recording" disabled>Stop Recording</button>
+  </div>
+
+  <video id="video" playsinline autoplay></video>
+
+  <video id="camera-preview"></video>
+
+</div>
+
+<script src="/js/adapter-latest.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/RecordRTC.js"></script>
+<script src="js/main.js"></script>
 </body>
 
 </html>
