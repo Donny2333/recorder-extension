@@ -7,7 +7,6 @@
 const app = require('../app')
 // force https
 const https = require('https')
-const fs = require('fs');
 
 var options = {
   key: fs.readFileSync('/etc/letsencrypt/live/bwg.bingzhe.wang/privkey.pem'),
