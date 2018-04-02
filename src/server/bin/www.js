@@ -7,6 +7,7 @@
 const app = require('../app')
 // force https
 const https = require('https')
+const fs = require("fs")
 
 var options = {
   key: fs.readFileSync('/etc/letsencrypt/live/bwg.bingzhe.wang/privkey.pem'),
@@ -40,7 +41,7 @@ server.on('listening', onListening)
 
 const io = require('socket.io').listen(server)
 const path = require('path')
-const fs = require("fs")
+
 const uuid = require('node-uuid')
 
 
