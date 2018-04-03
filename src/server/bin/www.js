@@ -5,27 +5,27 @@
  */
 
 const app = require('../app')
-// force https
+const http = require('http')
 const https = require('https')
+const config = require('../config')
 const fs = require("fs")
-
-var options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/bwg.bingzhe.wang/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/bwg.bingzhe.wang/fullchain.pem')
-}
 
 /**
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT || '4430')
+const port = normalizePort(process.env.PORT || '4000')
 app.set('port', port)
 
 /**
- * Create HTTPS server.
+ * Create server.
  */
 
-const server = https.createServer(options, app)
+const server = process.env.NODE_ENV === 'production' ?
+  https.createServer({
+    key: fs.readFileSync(config.key_path),
+    cert: fs.readFileSync(config.cert_path)
+  }, app) : http.createServer(app)
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -41,17 +41,13 @@ server.on('listening', onListening)
 
 const io = require('socket.io').listen(server)
 const path = require('path')
-
 const uuid = require('node-uuid')
-
 
 io.sockets.on('connection', function (socket) {
   socket.on('message', function (data) {
     const fileName = uuid.v4()
 
     socket.emit('ffmpeg-output', 0)
-
-    console.log(data)
 
     writeToDisk(data.audio.dataURL, fileName + '.wav')
 
@@ -67,7 +63,7 @@ io.sockets.on('connection', function (socket) {
 
 function writeToDisk(dataURL, fileName) {
   let fileExtension = fileName.split('.').pop(),
-    fileRootNameWithBase = '../public/uploads/' + fileName,
+    fileRootNameWithBase = path.join(__dirname, '../public/uploads/' + fileName),
     filePath = fileRootNameWithBase,
     fileID = 2,
     fileBuffer

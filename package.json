@@ -3,23 +3,34 @@
   "version": "1.0.0",
   "description": "A recorder plugin for chrome",
   "scripts": {
-    "serve": "node src/server/bin/www.js",
+    "start": "node src/server/bin/www.js",
+    "dev": "cross-env NODE_ENV=development PORT=4000 npm run start",
+    "serve": "cross-env NODE_ENV=production PORT=4430 npm run start",
+    "clean": "rimraf src/server/public/uploads/*.wav",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "recorder",
     "chrome-plugin"
   ],
+  "repository": {
+    "github": "https://github.com/Donny2333/recorder-extension"
+  },
   "author": "Donny",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.2",
     "express": "^4.16.3",
+    "fluent-ffmpeg": "^2.1.2",
     "morgan": "^1.9.0",
     "node-uuid": "^1.4.8",
     "pug": "^2.0.3",
     "recordrtc": "^5.4.6",
     "request": "^2.85.0",
     "socket.io": "^2.1.0"
+  },
+  "devDependencies": {
+    "cross-env": "^5.1.4",
+    "rimraf": "^2.6.2"
   }
 }
