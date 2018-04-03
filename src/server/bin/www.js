@@ -69,7 +69,17 @@ io.sockets.on('connection', function (socket) {
     const fileName = uuid.v4()
 
     fs.writeFileSync(`${path.join(__dirname, '../public/uploads/' + fileName)}.wav`, new Buffer(recordedBlobs))
+    recordedBlobs = []
     socket.emit('merged', fileName + '.wav')
+  })
+
+  socket.on('disconnect', function () {
+    if (recordedBlobs.length) {
+      const fileName = uuid.v4()
+
+      fs.writeFileSync(`${path.join(__dirname, '../public/uploads/' + fileName)}.wav`, new Buffer(recordedBlobs))
+      recordedBlobs = []
+    }
   })
 })
 

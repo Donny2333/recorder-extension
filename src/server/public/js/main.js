@@ -22,22 +22,27 @@ let recordedBlobs = []
 
 const socketio = io()
 
-socketio.on('connect', function () {
+socketio.on('connect', _ => {
   startRecording.disabled = false
 })
 
-socketio.on('merged', function (fileName) {
+socketio.on('merged', fileName => {
   let href = (location.href.split('/').pop().length ? location.href.replace(location.href.split('/').pop(),
     '') : location.href)
 
   href = href + 'uploads/' + fileName
 
-  console.log('got file ' + href)
+  console.log('Got file ' + href)
 
   cameraPreview.src = href
   cameraPreview.play()
   cameraPreview.muted = false
   cameraPreview.controls = true
+})
+
+socketio.on('disconnect', _ => {
+  socketio.close()
+  console.log('Socket disconnected')
 })
 
 audioOutputSelect.disabled = !('sinkId' in HTMLMediaElement.prototype)
