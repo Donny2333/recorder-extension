@@ -77,8 +77,6 @@ function writeToDisk(dataURL, fileName) {
   dataURL = dataURL.split(',').pop()
   fileBuffer = new Buffer(dataURL, 'base64')
   fs.writeFileSync(filePath, fileBuffer)
-
-  console.log('filePath', filePath)
 }
 
 function merge(socket, fileName) {

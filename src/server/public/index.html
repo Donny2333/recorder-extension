@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="css/style.css">
   <title>Recorder</title>
 </head>
 
@@ -26,19 +27,18 @@
     <select id="videoSource"></select>
   </div>
 
-  <div>
+  <div class="button">
     <button id="start-recording" disabled>Start Recording</button>
     <button id="stop-recording" disabled>Stop Recording</button>
   </div>
 
   <video id="video" playsinline autoplay></video>
-
-  <video id="camera-preview"></video>
+  <video id="camera-preview" autoplay></video>
 
 </div>
 
-<script src="/js/adapter-latest.js"></script>
-<script src="/socket.io/socket.io.js"></script>
+<script src="socket.io/socket.io.js"></script>
+<script src="js/adapter-latest.js"></script>
 <script src="js/RecordRTC.js"></script>
 <script src="js/main.js"></script>
 </body>
