@@ -40,8 +40,6 @@ socketio.on('merged', function (fileName) {
   cameraPreview.controls = true
 })
 
-//
-
 audioOutputSelect.disabled = !('sinkId' in HTMLMediaElement.prototype)
 
 function gotDevices(deviceInfos) {
@@ -59,12 +57,10 @@ function gotDevices(deviceInfos) {
     const option = document.createElement('option')
     option.value = deviceInfo.deviceId
     if (deviceInfo.kind === 'audioinput') {
-      option.text =
-        deviceInfo.label || 'microphone ' + (audioInputSelect.length + 1)
+      option.text = deviceInfo.label || 'microphone ' + (audioInputSelect.length + 1)
       audioInputSelect.appendChild(option)
     } else if (deviceInfo.kind === 'audiooutput') {
-      option.text =
-        deviceInfo.label || 'speaker ' + (audioOutputSelect.length + 1)
+      option.text = deviceInfo.label || 'speaker ' + (audioOutputSelect.length + 1)
       audioOutputSelect.appendChild(option)
     } else if (deviceInfo.kind === 'videoinput') {
       option.text = deviceInfo.label || 'camera ' + (videoSelect.length + 1)
@@ -131,6 +127,14 @@ function gotStream(stream) {
 function handleDataAvailable(event) {
   if (event.data && event.data.size > 0) {
     recordedBlobs.push(event.data)
+
+    let arrayBuffer
+    const fileReader = new FileReader()
+    fileReader.onload = function () {
+      arrayBuffer = new Uint8Array(this.result)
+      socketio.emit('recordedBlobs', arrayBuffer)
+    }
+    fileReader.readAsArrayBuffer(event.data)
   }
 }
 
@@ -188,7 +192,7 @@ stopRecording.onclick = function () {
     const files = {
       audio: {
         type: 'audio/wav',
-        dataURL: 'data:audio/wav;base64,' + _arrayBufferToBase64(reader.result)
+        dataURL: 'data:audio/wav;base64,' + _arrayBufferToBase64(this.result)
       }
       // video: {
       //     type: recordVideo.getBlob().type || 'video/webm',
@@ -196,7 +200,8 @@ stopRecording.onclick = function () {
       // }
     }
 
-    socketio.emit('message', files)
+    // socketio.emit('message', files)
+    socketio.emit('stopRecorded')
   }
 }
 

@@ -8,7 +8,7 @@ const app = require('../app')
 const http = require('http')
 const https = require('https')
 const config = require('../config')
-const fs = require("fs")
+const fs = require('fs')
 
 /**
  * Get port from environment and store in Express.
@@ -58,6 +58,18 @@ io.sockets.on('connection', function (socket) {
     } else
     // if it is firefox or if user is recording only audio
       socket.emit('merged', fileName + '.wav')
+  })
+
+  let recordedBlobs = []
+  socket.on('recordedBlobs', function (data) {
+    recordedBlobs = recordedBlobs.concat(Object.values(data))
+  })
+
+  socket.on('stopRecorded', function () {
+    const fileName = uuid.v4()
+
+    fs.writeFileSync(`${path.join(__dirname, '../public/uploads/' + fileName)}.wav`, new Buffer(recordedBlobs))
+    socket.emit('merged', fileName + '.wav')
   })
 })
 
