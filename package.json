@@ -4,8 +4,10 @@
   "description": "A recorder plugin for chrome",
   "scripts": {
     "start": "node src/server/bin/www.js",
+    "pm2": "pm2 start src/server/bin/www.js",
     "dev": "cross-env NODE_ENV=development PORT=4000 npm run start",
-    "serve": "cross-env NODE_ENV=production PORT=4430 npm run start",
+    "server": "cross-env NODE_ENV=production PORT=4430 npm run start",
+    "server-pm2": "cross-env NODE_ENV=production PORT=4430 npm run pm2",
     "clean": "rimraf src/server/public/uploads/*.wav",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
