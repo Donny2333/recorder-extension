@@ -8,12 +8,12 @@
 
 'use strict'
 
-const videoElement = document.querySelector('video#video')
 const audioInputSelect = document.querySelector('select#audioSource')
 const audioOutputSelect = document.querySelector('select#audioOutput')
 const videoSelect = document.querySelector('select#videoSource')
 const startRecording = document.querySelector('button#start-recording')
 const stopRecording = document.querySelector('button#stop-recording')
+const videoElement = document.querySelector('video#video')
 const cameraPreview = document.querySelector('#camera-preview')
 
 let selectors = [audioInputSelect, audioOutputSelect, videoSelect]
