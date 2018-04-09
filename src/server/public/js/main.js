@@ -13,7 +13,7 @@ const audioOutputSelect = document.querySelector('select#audioOutput')
 const videoSelect = document.querySelector('select#videoSource')
 const startRecording = document.querySelector('button#start-recording')
 const stopRecording = document.querySelector('button#stop-recording')
-const videoElement = document.querySelector('video#video')
+const videoElement = document.querySelector('#video')
 const cameraPreview = document.querySelector('#camera-preview')
 
 let selectors = [audioInputSelect, audioOutputSelect, videoSelect]
@@ -194,31 +194,30 @@ stopRecording.onclick = function () {
   const reader = new FileReader()
   reader.readAsArrayBuffer(superBuffer)
   reader.onloadend = function () {
-    const files = {
-      audio: {
-        type: 'audio/wav',
-        dataURL: 'data:audio/wav;base64,' + _arrayBufferToBase64(this.result)
-      }
-      // video: {
-      //     type: recordVideo.getBlob().type || 'video/webm',
-      //     dataURL: videoDataURL
-      // }
-    }
-
+    // const files = {
+    //   audio: {
+    //     type: 'audio/wav',
+    //     dataURL: 'data:audio/wav;base64,' + _arrayBufferToBase64(this.result)
+    //   }
+    //   // video: {
+    //   //     type: recordVideo.getBlob().type || 'video/webm',
+    //   //     dataURL: videoDataURL
+    //   // }
+    // }
     // socketio.emit('message', files)
     socketio.emit('stopRecorded')
   }
 }
 
-function _arrayBufferToBase64(buffer) {
-  let binary = ''
-  let bytes = new Uint8Array(buffer)
-  let len = bytes.byteLength
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return window.btoa(binary)
-}
+// function _arrayBufferToBase64(buffer) {
+//   let binary = ''
+//   let bytes = new Uint8Array(buffer)
+//   let len = bytes.byteLength
+//   for (let i = 0; i < len; i++) {
+//     binary += String.fromCharCode(bytes[i])
+//   }
+//   return window.btoa(binary)
+// }
 
 function start() {
   if (window.stream) {
@@ -227,7 +226,7 @@ function start() {
     })
   }
   const audioSource = audioInputSelect.value
-  const videoSource = videoSelect.value
+  // const videoSource = videoSelect.value
   const constraints = {
     audio: {deviceId: audioSource ? {exact: audioSource} : undefined}
     // video: {deviceId: videoSource ? {exact: videoSource} : undefined}
