@@ -3,24 +3,21 @@
 /**
  * Module dependencies.
  */
-
 const app = require('../app')
 const http = require('http')
 const https = require('https')
-const config = require('../config')
 const fs = require('fs')
+const config = require('../config')
 
 /**
  * Get port from environment and store in Express.
  */
-
 const port = normalizePort(process.env.PORT || '4000')
 app.set('port', port)
 
 /**
  * Create server.
  */
-
 const server = process.env.NODE_ENV === 'production' ?
   https.createServer({
     key: fs.readFileSync(config.key_path),
@@ -30,7 +27,6 @@ const server = process.env.NODE_ENV === 'production' ?
 /**
  * Listen on provided port, on all network interfaces.
  */
-
 server.listen(port)
 server.on('error', onError)
 server.on('listening', onListening)
@@ -38,91 +34,110 @@ server.on('listening', onListening)
 /**
  * Init sockets
  */
-
 const io = require('socket.io').listen(server)
 const path = require('path')
 const uuid = require('node-uuid')
 
-io.sockets.on('connection', function (socket) {
-  socket.on('message', function (data) {
-    const fileName = uuid.v4()
+function walkDir(path) {
+  var dirList = fs.readdirSync(path), fileList = [];
 
-    socket.emit('ffmpeg-output', 0)
+  dirList.forEach(function (item) {
+    if (fs.statSync(path + '/' + item).isFile() && 0 !== item.indexOf('.')) {
+      fileList.push(path + '/' + item);
+    }
+  });
 
-    writeToDisk(data.audio.dataURL, fileName + '.wav')
+  dirList.forEach(function (item) {
+    if (fs.statSync(path + '/' + item).isDirectory()) {
+      walkDir(path + '/' + item);
+    }
+  });
 
-    // if it is chrome
-    if (data.video) {
-      writeToDisk(data.video.dataURL, fileName + '.webm')
-      merge(socket, fileName)
-    } else
-    // if it is firefox or if user is recording only audio
-      socket.emit('merged', fileName + '.wav')
+  return fileList;
+}
+
+/**
+ * extend fs for move function
+ * @param oldPath
+ * @param newPath
+ * @param callback
+ */
+function move(oldPath, newPath, callback) {
+  fs.rename(oldPath, newPath, function (err) {
+    if (err) {
+      if (err.code === 'EXDEV') {
+        copy();
+      } else {
+        callback(err);
+      }
+      return;
+    }
+    callback();
+  });
+
+  function copy() {
+    var readStream = fs.createReadStream(oldPath);
+    var writeStream = fs.createWriteStream(newPath);
+
+    readStream.on('error', callback);
+    writeStream.on('error', callback);
+
+    readStream.on('close', function () {
+      fs.unlink(oldPath, callback);
+    });
+
+    readStream.pipe(writeStream);
+  }
+}
+
+io.sockets.on('connection', function (client) {
+  var file, uploadDir = process.cwd() + '/src/server/public/uploads'
+  var tmpDir = uploadDir + '/tmp/1'
+  var userDir = uploadDir + '/user/1'
+
+  client.on('startRecord', function () {
+    var tmpDirFileList = walkDir(tmpDir);
+    if (tmpDirFileList.length) {
+      file = tmpDirFileList[0]
+    } else {
+      var userDirFileList = walkDir(userDir)
+      if (userDirFileList.length) {
+        userDirFileList = userDirFileList.sort(function(a, b) {
+          a = parseInt(a.split('.').shift().split('/').pop())
+          b = parseInt(b.split('.').shift().split('/').pop())
+          return a - b;
+        })
+        var lastNum = userDirFileList.pop().split('.').shift().split('/').pop()
+        file = tmpDir + '/' + (parseInt(lastNum) + 1) + '.wav'
+      } else {
+        file = tmpDir + '/1.wav'
+      }
+    }
   })
 
-  let recordedBlobs = []
-  socket.on('recordedBlobs', function (data) {
-    recordedBlobs = recordedBlobs.concat(Object.values(data))
+  client.on('startTransfer', (data) => {
+    fs.appendFileSync(file, new Buffer(Object.values(data)), (err) => {
+      if (err) {
+        console.error(err)
+      }
+    })
   })
 
-  socket.on('stopRecorded', function () {
-    const fileName = uuid.v4()
+  client.on('stopRecord', function () {
+    var fileName = file.split('/').pop()
+    move(file, userDir + '/' + fileName, (err) => {
+      if (err) {
+        console.error(err)
+      }
+    })
 
-    fs.writeFileSync(`${path.join(__dirname, '../public/uploads/' + fileName)}.wav`, new Buffer(recordedBlobs))
-    socket.emit('merged', fileName + '.wav')
+    console.log(walkDir(tmpDir))
   })
 })
-
-function writeToDisk(dataURL, fileName) {
-  let fileExtension = fileName.split('.').pop(),
-    fileRootNameWithBase = path.join(__dirname, '../public/uploads/' + fileName),
-    filePath = fileRootNameWithBase,
-    fileID = 2,
-    fileBuffer
-
-  // @todo return the new filename to client
-  while (fs.existsSync(filePath)) {
-    filePath = fileRootNameWithBase + '(' + fileID + ').' + fileExtension
-    fileID += 1
-  }
-
-  dataURL = dataURL.split(',').pop()
-  fileBuffer = new Buffer(dataURL, 'base64')
-  fs.writeFileSync(filePath, fileBuffer)
-}
-
-function merge(socket, fileName) {
-  const FFmpeg = require('fluent-ffmpeg')
-
-  const audioFile = path.join(__dirname, 'uploads', fileName + '.wav'),
-    videoFile = path.join(__dirname, 'uploads', fileName + '.webm'),
-    mergedFile = path.join(__dirname, 'uploads', fileName + '-merged.webm')
-
-  new FFmpeg({
-    source: videoFile
-  })
-    .addInput(audioFile)
-    .on('error', function (err) {
-      socket.emit('ffmpeg-error', 'ffmpeg : An error occurred: ' + err.message)
-    })
-    .on('progress', function (progress) {
-      socket.emit('ffmpeg-output', Math.round(progress.percent))
-    })
-    .on('end', function () {
-      socket.emit('merged', fileName + '-merged.webm')
-      console.log('Merging finished !')
-
-      // removing audio/video files
-      fs.unlink(audioFile)
-      fs.unlink(videoFile)
-    })
-    .saveToFile(mergedFile)
-}
 
 /**
  * Normalize a port into a number, string, or false.
  */
-
 function normalizePort(val) {
   const port = parseInt(val, 10)
 
@@ -142,7 +157,6 @@ function normalizePort(val) {
 /**
  * Event listener for HTTP server "error" event.
  */
-
 function onError(error) {
   if (error.syscall !== 'listen') {
     throw error
@@ -166,7 +180,6 @@ function onError(error) {
 /**
  * Event listener for HTTP server "listening" event.
  */
-
 function onListening() {
   const addr = server.address()
   const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
