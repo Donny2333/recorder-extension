@@ -74,7 +74,7 @@ function gotDevices(deviceInfos) {
       console.log('Some other kind of source/device: ', deviceInfo)
     }
   }
-  selectors.forEach(function (select, selectorIndex) {
+  checkDevices() && selectors.forEach(function (select, selectorIndex) {
     if (
       Array.prototype.slice.call(select.childNodes).some(function (n) {
         return n.value === values[selectorIndex]
@@ -83,6 +83,15 @@ function gotDevices(deviceInfos) {
       select.value = values[selectorIndex]
     }
   })
+}
+
+function checkDevices() {
+  let errorStr = 'Cannot find:\n', len = errorStr.length
+  audioInputSelect.length === 0 && (errorStr += 'Audio input\n')
+  audioOutputSelect.length === 0 && (errorStr += 'Audio output\n')
+  videoSelect.length === 0 && (errorStr += 'Camera\n')
+  alert(errorStr)
+  return len === errorStr.length
 }
 
 navigator.mediaDevices
