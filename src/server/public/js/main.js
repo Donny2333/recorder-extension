@@ -398,7 +398,6 @@ function voiceChange() {
   convolver.buffer = undefined
 
   const voiceSetting = voiceSelect.value
-  console.log(voiceSetting)
 
   if (voiceSetting === "distortion") {
     distortion.curve = makeDistortionCurve(400)
